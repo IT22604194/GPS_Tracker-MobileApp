@@ -63,7 +63,7 @@ class LocationService : Service() {
                 // Send to server using HttpURLConnection in a background thread
                 Thread {
                     try {
-                        val url = URL("http://10.3.7.35/save_location.php")
+                        val url = URL("http://10.0.2.2/gps/save_location.php")
                         val postData = "rep_id=rep123&latitude=$lat&longitude=$lon"
 
                         with(url.openConnection() as HttpURLConnection) {

@@ -67,13 +67,13 @@ class RegisterActivity : ComponentActivity() {
     private fun performRegister(username: String, password: String, onResult: (String) -> Unit) {
         Thread {
             try {
-                val url = URL("http://10.3.7.35/Register.php")
+                val url = URL("http://10.0.2.2/gps/Register.php")
                 val postData = "username=$username&password=$password"
 
                 with(url.openConnection() as HttpURLConnection) {
                     requestMethod = "POST"
                     doOutput = true
-                    setRequestProperty("Content-Type", "application/x-www-form-urlencoded")
+                    setRequestProperty("Content-Type","application/x-www-form-urlencoded")
 
                     outputStream.use { it.write(postData.toByteArray()) }
 

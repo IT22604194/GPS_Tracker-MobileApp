@@ -75,7 +75,7 @@ class LoginActivity : ComponentActivity() {
     fun performLogin(username: String, password: String, onResult: (String) -> Unit) {
         Thread {
             try {
-                val url = URL("http://10.3.7.35/Login.php")
+                val url = URL("http://10.0.2.2/gps/Login.php")
                 val postData = "username=$username&password=$password"
 
                 with(url.openConnection() as HttpURLConnection) {
