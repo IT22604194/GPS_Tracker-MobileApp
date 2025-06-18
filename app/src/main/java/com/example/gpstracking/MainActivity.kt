@@ -5,17 +5,12 @@ import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.height
-import androidx.compose.material.Button
-import androidx.compose.material.MaterialTheme
-import androidx.compose.material.Surface
-import androidx.compose.material.Text
-import androidx.compose.runtime.Composable
+import androidx.compose.foundation.layout.*
+import androidx.compose.material.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.core.app.ActivityCompat
 import com.example.gpstracking.ui.theme.GPSTrackingTheme
@@ -29,38 +24,63 @@ class MainActivity : ComponentActivity() {
     )
     private val PERMISSION_REQUEST_CODE = 1001
 
-    private var isTracking = false
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // Request permissions at runtime
         if (!hasLocationPermissions()) {
             ActivityCompat.requestPermissions(this, LOCATION_PERMISSIONS, PERMISSION_REQUEST_CODE)
         }
 
         setContent {
             GPSTrackingTheme {
-                Column(
-                    modifier = Modifier.fillMaxSize()
+                var isTracking by remember { mutableStateOf(false) }
+
+                Surface(
+                    modifier = Modifier.fillMaxSize(),
+                    color = MaterialTheme.colors.background
                 ) {
-                    Button(onClick = {
-                        if (hasLocationPermissions()) {
-                            startTracking()
-                        } else {
-                            ActivityCompat.requestPermissions(this@MainActivity, LOCATION_PERMISSIONS, PERMISSION_REQUEST_CODE)
+                    Column(
+                        modifier = Modifier.fillMaxSize(),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center
+                    ) {
+                        Button(
+                            onClick = {
+                                if (hasLocationPermissions()) {
+                                    startTracking()
+                                    isTracking = true
+                                } else {
+                                    ActivityCompat.requestPermissions(
+                                        this@MainActivity,
+                                        LOCATION_PERMISSIONS,
+                                        PERMISSION_REQUEST_CODE
+                                    )
+                                }
+                            },
+                            colors = ButtonDefaults.buttonColors(backgroundColor = Color(0xFF388E3C))
+                        ) {
+                            Text("Start", color = Color.White)
                         }
-                    }) {
-                        Text(text = "Start")
+
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        Button(
+                            onClick = {
+                                stopTracking()
+                                isTracking = false
+                            },
+                            colors = ButtonDefaults.buttonColors(backgroundColor = Color(0xFFD32F2F))
+                        ) {
+                            Text("Stop", color = Color.White)
+                        }
+
+                        Spacer(modifier = Modifier.height(24.dp))
+
+                        Text(
+                            text = if (isTracking) "Tracking is ON" else "Tracking is OFF",
+                            style = MaterialTheme.typography.h6
+                        )
                     }
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Button(onClick = {
-                        stopTracking()
-                    }) {
-                        Text(text = "Stop")
-                    }
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Text(text = if (isTracking) "Tracking is ON" else "Tracking is OFF")
                 }
             }
         }
@@ -77,7 +97,6 @@ class MainActivity : ComponentActivity() {
             action = LocationService.ACTION_START
             startService(this)
         }
-        isTracking = true
     }
 
     private fun stopTracking() {
@@ -85,7 +104,6 @@ class MainActivity : ComponentActivity() {
             action = LocationService.ACTION_STOP
             startService(this)
         }
-        isTracking = false
     }
 
     override fun onRequestPermissionsResult(
@@ -96,11 +114,7 @@ class MainActivity : ComponentActivity() {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         if (requestCode == PERMISSION_REQUEST_CODE) {
             if (grantResults.all { it == android.content.pm.PackageManager.PERMISSION_GRANTED }) {
-                // Permissions granted
                 startTracking()
-            } else {
-                // Permissions denied, show message or disable feature
-                // You can use a Toast or Snackbar here
             }
         }
     }

@@ -40,7 +40,7 @@ android {
 }
 
 dependencies {
-
+    implementation ("com.android.volley:volley:1.2.1")
     implementation ("androidx.work:work-runtime-ktx:2.9.0")// latest stable implementation("androidx.work:work-runtime-ktx:2.9.0")
     implementation("androidx.compose.material:material:1.5.3")
     implementation(libs.androidx.core.ktx)

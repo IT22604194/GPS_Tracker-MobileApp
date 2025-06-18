@@ -52,7 +52,9 @@ class LoginActivity : ComponentActivity() {
                     Button(onClick = {
                         performLogin(username, password) { result ->
                             if (result == "Login successful") {
-                                startActivity(Intent(this@LoginActivity, MainActivity::class.java))
+                                val intent = Intent(this@LoginActivity, MainActivity::class.java)
+                                intent.putExtra("username", username)
+                                startActivity(intent)
                                 finish()
                             } else {
                                 Toast.makeText(this@LoginActivity, result, Toast.LENGTH_SHORT).show()
@@ -61,21 +63,21 @@ class LoginActivity : ComponentActivity() {
                     }) {
                         Text("Login")
                     }
+
                     TextButton(onClick = {
                         startActivity(Intent(this@LoginActivity, RegisterActivity::class.java))
                     }) {
                         Text("Don't have an account? Register here")
                     }
-
-
                 }
             }
         }
     }
+
     fun performLogin(username: String, password: String, onResult: (String) -> Unit) {
         Thread {
             try {
-                val url = URL("http://10.0.2.2/gps/Login.php")
+                val url = URL("http://192.168.155.74/gps/Login.php")
                 val postData = "username=$username&password=$password"
 
                 with(url.openConnection() as HttpURLConnection) {
@@ -97,5 +99,4 @@ class LoginActivity : ComponentActivity() {
             }
         }.start()
     }
-
 }
