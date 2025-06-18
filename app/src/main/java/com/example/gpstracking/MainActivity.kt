@@ -27,6 +27,8 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        val repId = intent.getStringExtra("username") ?: "unknown"
+
         if (!hasLocationPermissions()) {
             ActivityCompat.requestPermissions(this, LOCATION_PERMISSIONS, PERMISSION_REQUEST_CODE)
         }
@@ -44,10 +46,13 @@ class MainActivity : ComponentActivity() {
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.Center
                     ) {
+                        Text("Logged in as: $repId")
+                        Spacer(modifier = Modifier.height(16.dp))
+
                         Button(
                             onClick = {
                                 if (hasLocationPermissions()) {
-                                    startTracking()
+                                    startTracking(repId)
                                     isTracking = true
                                 } else {
                                     ActivityCompat.requestPermissions(
@@ -66,7 +71,7 @@ class MainActivity : ComponentActivity() {
 
                         Button(
                             onClick = {
-                                stopTracking()
+                                stopTracking(repId)
                                 isTracking = false
                             },
                             colors = ButtonDefaults.buttonColors(backgroundColor = Color(0xFFD32F2F))
@@ -92,16 +97,18 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    private fun startTracking() {
+    private fun startTracking(repId: String) {
         Intent(applicationContext, LocationService::class.java).apply {
             action = LocationService.ACTION_START
+            putExtra("rep_id", repId)
             startService(this)
         }
     }
 
-    private fun stopTracking() {
+    private fun stopTracking(repId: String) {
         Intent(applicationContext, LocationService::class.java).apply {
             action = LocationService.ACTION_STOP
+            putExtra("rep_id", repId)
             startService(this)
         }
     }
@@ -114,7 +121,8 @@ class MainActivity : ComponentActivity() {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         if (requestCode == PERMISSION_REQUEST_CODE) {
             if (grantResults.all { it == android.content.pm.PackageManager.PERMISSION_GRANTED }) {
-                startTracking()
+                val repId = intent.getStringExtra("username") ?: "unknown"
+                startTracking(repId)
             }
         }
     }

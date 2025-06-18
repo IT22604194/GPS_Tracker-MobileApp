@@ -23,6 +23,7 @@ class LocationService : Service() {
 
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private lateinit var locationClient: LocationClient
+    private var repId: String = "unknown" // Default value
 
     override fun onBind(intent: Intent?): IBinder? = null
 
@@ -35,6 +36,8 @@ class LocationService : Service() {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        repId = intent?.getStringExtra("rep_id") ?: "unknown" // Extract rep_id from intent
+
         when (intent?.action) {
             ACTION_START -> start()
             ACTION_STOP -> stop()
@@ -59,7 +62,7 @@ class LocationService : Service() {
                 val lat = location.latitude.toString()
                 val lon = location.longitude.toString()
 
-                Log.d("LocationService", "Lat: $lat, Lon: $lon")
+                Log.d("LocationService", "Lat: $lat, Lon: $lon, repId: $repId")
 
                 // Volley POST request
                 val url = "http://192.168.155.74/gps/save_location.php"
@@ -76,7 +79,7 @@ class LocationService : Service() {
                 ) {
                     override fun getParams(): MutableMap<String, String> {
                         val params = HashMap<String, String>()
-                        params["rep_id"] = "rep123"
+                        params["rep_id"] = repId
                         params["latitude"] = lat
                         params["longitude"] = lon
                         return params
