@@ -9,6 +9,9 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
+    <meta-data
+        android:name="com.google.android.geo.API_KEY"
+        android:value="AIzaSyA8NO_7DR3Wr5vMHbDptCU8egyY0JQcNmI"/>
 
     <application
         android:name=".LocationApp"
@@ -43,6 +46,8 @@
             android:name=".LocationService"
             android:foregroundServiceType="location" />
         <activity android:name=".RegisterActivity" android:exported="true" />
+        <activity android:name=".MapActivity"/>
+
 
     </application>
 

@@ -85,7 +85,14 @@ class MainActivity : ComponentActivity() {
                             text = if (isTracking) "Tracking is ON" else "Tracking is OFF",
                             style = MaterialTheme.typography.h6
                         )
+                        Button(onClick = {
+                            startActivity(Intent(this@MainActivity, MapActivity::class.java))
+                        }) {
+                            Text("Open Map")
+                        }
+
                     }
+
                 }
             }
         }

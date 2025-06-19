@@ -65,7 +65,7 @@ class LocationService : Service() {
                 Log.d("LocationService", "Lat: $lat, Lon: $lon, repId: $repId")
 
                 // Volley POST request
-                val url = "http://192.168.155.74/gps/save_location.php"
+                val url = "http://192.168.251.74/gps/save_location.php"
                 val requestQueue = Volley.newRequestQueue(applicationContext)
 
                 val stringRequest = object : StringRequest(
