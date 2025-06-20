@@ -14,6 +14,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import com.example.gpstracking.ui.theme.GPSTrackingTheme
+import androidx.security.crypto.EncryptedSharedPreferences
+import androidx.security.crypto.MasterKey
 import java.net.HttpURLConnection
 import java.net.URL
 
@@ -52,9 +54,22 @@ class LoginActivity : ComponentActivity() {
                     Button(onClick = {
                         performLogin(username, password) { result ->
                             if (result == "Login successful") {
-                                val intent = Intent(this@LoginActivity, MainActivity::class.java)
-                                intent.putExtra("username", username)
-                                startActivity(intent)
+                                // ✅ Save session securely
+                                val masterKey = MasterKey.Builder(applicationContext)
+                                    .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
+                                    .build()
+
+                                val sharedPref = EncryptedSharedPreferences.create(
+                                    applicationContext,
+                                    "UserSession",
+                                    masterKey,
+                                    EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
+                                    EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
+                                )
+
+                                sharedPref.edit().putString("username", username).apply()
+
+                                startActivity(Intent(this@LoginActivity, MainActivity::class.java))
                                 finish()
                             } else {
                                 Toast.makeText(this@LoginActivity, result, Toast.LENGTH_SHORT).show()
@@ -77,7 +92,7 @@ class LoginActivity : ComponentActivity() {
     fun performLogin(username: String, password: String, onResult: (String) -> Unit) {
         Thread {
             try {
-                val url = URL("http://192.168.155.74/gps/Login.php")
+                val url = URL("http://192.168.155.74/gps/Backend/Login.php")
                 val postData = "username=$username&password=$password"
 
                 with(url.openConnection() as HttpURLConnection) {
