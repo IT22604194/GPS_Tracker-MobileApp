@@ -16,7 +16,7 @@ $end_date = $_GET['end_date'] ?? '';
 <head>
     <title>GPS Location Dashboard</title>
     <style>
-        body { font-family: Arial; margin: 20px; background: #f5f5f5; }
+        body { font-family: Arial; margin: 20px; background: #f5f5f5;}
         h2 { color: #333; }
         form { margin-bottom: 20px; }
         input, button {
@@ -59,10 +59,14 @@ $end_date = $_GET['end_date'] ?? '';
         <th>Latitude</th>
         <th>Longitude</th>
         <th>Timestamp</th>
+        <th>ClockOut Latitude</th>
+        <th>ClockOut Longitude</th>
+        <th>ClockOut Timestamp</th>
+
     </tr>
 
     <?php
-    $sql = "SELECT rep_id, latitude, longitude, timestamp FROM locations WHERE 1=1";
+    $sql = "SELECT rep_id, latitude, longitude, timestamp,clock_out_latitude,clock_out_longitude,clock_out_timestamp FROM locations WHERE 1=1";
     $params = [];
     $types = '';
 
@@ -100,6 +104,9 @@ $end_date = $_GET['end_date'] ?? '';
                 <td>{$row['latitude']}</td>
                 <td>{$row['longitude']}</td>
                 <td>{$row['timestamp']}</td>
+                <td>{$row['clock_out_latitude']}</td>
+                <td>{$row['clock_out_longitude']}</td>
+                <td>{$row['clock_out_timestamp']}</td>
             </tr>";
         }
     } else {

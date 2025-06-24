@@ -1,6 +1,6 @@
 <?php 
-$host = "";
+$host = "127.0.0.1";
 $user = "root";
-$pass = "";
-$db = "db_name";
+$pass = "abcd";
+$db = "gps_tracker";
 ?>
