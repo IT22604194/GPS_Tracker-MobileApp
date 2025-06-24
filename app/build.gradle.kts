@@ -45,7 +45,7 @@ dependencies {
     implementation ("androidx.work:work-runtime-ktx:2.9.0")// latest stable implementation("androidx.work:work-runtime-ktx:2.9.0")
     implementation("androidx.compose.material:material:1.5.3")
     implementation(libs.androidx.core.ktx)
-    implementation(libs.androidx.lifecycle.runtime.ktx)
+    implementation(libs.androidx.lifecycle.runtime.ktx)//life cycle scope for coroutines
     implementation(libs.androidx.activity.compose)
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.ui)

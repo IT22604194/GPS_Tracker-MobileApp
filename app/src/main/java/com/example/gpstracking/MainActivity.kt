@@ -169,7 +169,7 @@ class MainActivity : ComponentActivity() {
                     val lon = location.longitude.toString()
                     val clockOutTime = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date())
 
-                    val url = "http://192.168.155.74/gps/Backend/location_handler.php"
+                    val url = "http://192.168.23.74/gps/Backend/location_handler.php"
                     val requestQueue = Volley.newRequestQueue(applicationContext)
 
                     val stringRequest = object : StringRequest(
