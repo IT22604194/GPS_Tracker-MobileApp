@@ -36,7 +36,7 @@ class LocationService : Service() {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        repId = intent?.getStringExtra("rep_id") ?: "unknown" // Extract rep_id from intent
+        repId = intent?.getStringExtra("rep_id") ?:"unknown" // Extract rep_id from intent
 
         when (intent?.action) {
             ACTION_START -> start()
@@ -65,16 +65,16 @@ class LocationService : Service() {
                 Log.d("LocationService", "Lat: $lat, Lon: $lon, repId: $repId")
 
                 // Volley POST request
-                val url = "http://192.168.155.74/gps/save_location.php"
+                val url = "http://192.168.23.74/gps/Backend/location_handler.php"
                 val requestQueue = Volley.newRequestQueue(applicationContext)
+                //send form-data in an POST request using volley
 
-                val stringRequest = object : StringRequest(
-                    Method.POST, url,
+                val stringRequest = object : StringRequest( Method.POST, url,
                     Response.Listener { response ->
-                        Log.d("VolleySuccess", "Server response: $response")
+                        Log.d("VolleySuccess", "Server response: $response")//handle success
                     },
                     Response.ErrorListener { error ->
-                        Log.e("VolleyError", "Error: ${error.message}")
+                        Log.e("VolleyError", "Error: ${error.message}")//handle errors
                     }
                 ) {
                     override fun getParams(): MutableMap<String, String> {
@@ -82,6 +82,7 @@ class LocationService : Service() {
                         params["rep_id"] = repId
                         params["latitude"] = lat
                         params["longitude"] = lon
+                        params["action"] = "clock_in" //NEW PARAM ADDED
                         return params
                     }
                 }
