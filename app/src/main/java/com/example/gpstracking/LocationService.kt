@@ -65,7 +65,7 @@ class LocationService : Service() {
                 Log.d("LocationService", "Lat: $lat, Lon: $lon, repId: $repId")
 
                 // Volley POST request
-                val url = "http://192.168.23.74/gps/Backend/location_handler.php"
+                val url = "http://192.168.128.74/gps/Backend/location_handler.php"
                 val requestQueue = Volley.newRequestQueue(applicationContext)
                 //send form-data in an POST request using volley
 

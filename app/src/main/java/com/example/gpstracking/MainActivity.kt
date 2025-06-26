@@ -1,8 +1,12 @@
 package com.example.gpstracking
 
 import android.Manifest
+import android.content.Context
 import android.content.Intent
+import android.media.audiofx.BassBoost
+import android.net.Uri
 import android.os.Bundle
+import android.os.PowerManager
 import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
@@ -67,71 +71,103 @@ class MainActivity : ComponentActivity() {
             GPSTrackingTheme {
                 var isTracking by remember { mutableStateOf(false) }
 
-                Surface(
-                    modifier = Modifier.fillMaxSize(),
-                    color = MaterialTheme.colors.background
-                ) {
-                    Column(
-                        modifier = Modifier.fillMaxSize(),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.Center
-                    ) {
-                        Text("Welcome back, $repId!", style = MaterialTheme.typography.h6)
-                        Spacer(modifier = Modifier.height(16.dp))
-
-                        Button(
-                            onClick = {
-                                if (hasLocationPermissions()) {
-                                    startTracking(repId)
-                                    isTracking = true
-                                } else {
-                                    ActivityCompat.requestPermissions(
-                                        this@MainActivity,
-                                        LOCATION_PERMISSIONS,
-                                        PERMISSION_REQUEST_CODE
-                                    )
-                                }
-                            },
-                            colors = ButtonDefaults.buttonColors(backgroundColor = Color(0xFF388E3C))
-                        ) {
-                            Text("Clock In", color = Color.White)
-                        }
-
-                        Spacer(modifier = Modifier.height(16.dp))
-
-                        Button(
-                            onClick = {
-                                stopTracking(repId)
-                                isTracking = false
-                            },
-                            colors = ButtonDefaults.buttonColors(backgroundColor = Color(0xFFD32F2F))
-                        ) {
-                            Text("Clock Out", color = Color.White)
-                        }
-
-                        Spacer(modifier = Modifier.height(24.dp))
-
-                        Text(
-                            text = if (isTracking) "Tracking is ON" else "Tracking is OFF",
-                            style = MaterialTheme.typography.h6
+                Scaffold(
+                    topBar = {
+                        TopAppBar(
+                            title = { Text("GPS Tracking", color = Color.White) },
+                            backgroundColor = Color(0xFF0D47A1)
                         )
-
-                        Spacer(modifier = Modifier.height(32.dp))
-
-                        Button(
-                            onClick = {
-                                sharedPref.edit().clear().apply()
-                                startActivity(Intent(this@MainActivity, LoginActivity::class.java))
-                                finish()
-                            },
-                            colors = ButtonDefaults.buttonColors(backgroundColor = Color(0xFF607D8B))
+                    },
+                    content = { paddingValues ->
+                        Column(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(paddingValues)
+                                .padding(horizontal = 24.dp, vertical = 16.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.Center
                         ) {
-                            Text("Logout", color = Color.White)
+                            Text(
+                                text = "Welcome back, $repId!",
+                                style = MaterialTheme.typography.h6,
+                                color = Color(0xFF0D47A1)
+                            )
+
+                            Spacer(modifier = Modifier.height(24.dp))
+
+                            Button(
+                                onClick = {
+                                    if (hasLocationPermissions()) {
+                                        startTracking(repId)
+                                        isTracking = true
+                                    } else {
+                                        ActivityCompat.requestPermissions(
+                                            this@MainActivity,
+                                            LOCATION_PERMISSIONS,
+                                            PERMISSION_REQUEST_CODE
+                                        )
+                                    }
+                                },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(50.dp),
+                                colors = ButtonDefaults.buttonColors(backgroundColor = Color(0xFF1565C0))
+                            ) {
+                                Text("Clock In", color = Color.White)
+                            }
+
+                            Spacer(modifier = Modifier.height(16.dp))
+
+                            Button(
+                                onClick = {
+                                    stopTracking(repId)
+                                    isTracking = false
+                                },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(50.dp),
+                                colors = ButtonDefaults.buttonColors(backgroundColor = Color(0xFFD32F2F))
+                            ) {
+                                Text("Clock Out", color = Color.White)
+                            }
+
+                            Spacer(modifier = Modifier.height(24.dp))
+
+                            Text(
+                                text = if (isTracking) "Tracking is ON" else "Tracking is OFF",
+                                color = if (isTracking) Color(0xFF2E7D32) else Color(0xFFD32F2F),
+                                style = MaterialTheme.typography.subtitle1
+                            )
+
+                            Spacer(modifier = Modifier.height(32.dp))
+
+                            Button(
+                                onClick = {
+                                    sharedPref.edit().clear().apply()
+                                    startActivity(Intent(this@MainActivity, LoginActivity::class.java))
+                                    finish()
+                                },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(45.dp),
+                                colors = ButtonDefaults.buttonColors(backgroundColor = Color(0xFF78909C))
+                            ) {
+                                Text("Logout", color = Color.White)
+                            }
                         }
                     }
-                }
+                )
             }
         }
+
+
+        val powerManager = getSystemService(Context.POWER_SERVICE) as PowerManager
+        if (!powerManager.isIgnoringBatteryOptimizations(packageName)) {
+            val intent = Intent(android.provider.Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS)
+            intent.data = Uri.parse("package:$packageName")
+            startActivity(intent)
+        }
+
     }
 
     private fun hasLocationPermissions(): Boolean {
@@ -167,9 +203,9 @@ class MainActivity : ComponentActivity() {
                 if (location != null) {
                     val lat = location.latitude.toString()
                     val lon = location.longitude.toString()
-                    val clockOutTime = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date())
+                    val clockOutTime = SimpleDateFormat("yyyy-MM-dd HH:mm:ss",Locale.getDefault()).format(Date())
 
-                    val url = "http://192.168.23.74/gps/Backend/location_handler.php"
+                    val url = "http://192.168.128.74/gps/Backend/location_handler.php"
                     val requestQueue = Volley.newRequestQueue(applicationContext)
 
                     val stringRequest = object : StringRequest(
@@ -232,4 +268,6 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
+
+
 }

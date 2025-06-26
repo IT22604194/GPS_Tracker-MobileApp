@@ -40,6 +40,8 @@ android {
 }
 
 dependencies {
+    implementation ("androidx.compose.material:material-icons-extended:1.6.1") // Use latest Compose version
+    implementation ("com.google.android.gms:play-services-location:21.0.1")
     implementation ("androidx.security:security-crypto:1.1.0-alpha03")
     implementation ("com.android.volley:volley:1.2.1")
     implementation ("androidx.work:work-runtime-ktx:2.9.0")// latest stable implementation("androidx.work:work-runtime-ktx:2.9.0")
@@ -54,6 +56,7 @@ dependencies {
     implementation(libs.androidx.material3)
     implementation(libs.play.services.location)
     implementation(libs.androidx.appcompat)
+    implementation(libs.androidx.runtime.saved.instance.state)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
