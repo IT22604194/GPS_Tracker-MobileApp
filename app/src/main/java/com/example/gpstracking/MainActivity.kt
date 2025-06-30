@@ -68,9 +68,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             GPSTrackingTheme {
                 var isTracking by remember { mutableStateOf(false) }
-                val clockInTimePref = remember {
-                    mutableStateOf(sharedPref.getString("clock_in_time", null))
-                }
+                val clockInTimePref = remember { mutableStateOf(sharedPref.getString("clock_in_time", null)) }
 
                 Scaffold(
                     topBar = {
@@ -88,17 +86,9 @@ class MainActivity : ComponentActivity() {
                             horizontalAlignment = Alignment.CenterHorizontally,
                             verticalArrangement = Arrangement.Center
                         ) {
-                            Text(
-                                text = "Welcome back, $repId!",
-                                style = MaterialTheme.typography.h6,
-                                color = Color(0xFF0D47A1)
-                            )
-
-                            Text(
-                                text = "Rep ID: $repId",
-                                style = MaterialTheme.typography.body1,
-                                color = Color.DarkGray
-                            )
+                            Text("Welcome back, $repId!", style = MaterialTheme.typography.h6, color = Color(0xFF0D47A1))
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text("Rep ID: $repId", style = MaterialTheme.typography.body1, color = Color.DarkGray)
 
                             Spacer(modifier = Modifier.height(24.dp))
 
@@ -119,6 +109,7 @@ class MainActivity : ComponentActivity() {
                                                 val lon = location.longitude.toString()
                                                 val clockInTime = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date())
 
+                                                // Save it only after successful location
                                                 sharedPref.edit().putString("clock_in_time", clockInTime).apply()
                                                 clockInTimePref.value = clockInTime
 
@@ -161,7 +152,8 @@ class MainActivity : ComponentActivity() {
                                             PERMISSION_REQUEST_CODE
                                         )
                                     }
-                                },
+                                }
+                                ,
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .height(50.dp),
@@ -190,25 +182,16 @@ class MainActivity : ComponentActivity() {
                             Spacer(modifier = Modifier.height(16.dp))
 
                             if (clockInTimePref.value != null) {
-                                Text(
-                                    text = "🟢 You clocked in at: ${clockInTimePref.value}",
-                                    color = Color(0xFF2E7D32),
-                                    style = MaterialTheme.typography.subtitle1
-                                )
+                                Text("You clocked in at: ${clockInTimePref.value}", color = Color(0xFF2E7D32))
                             } else {
-                                Text(
-                                    text = "🔴 You are not clocked in",
-                                    color = Color(0xFFD32F2F),
-                                    style = MaterialTheme.typography.subtitle1
-                                )
+                                Text("You are not clocked in", color = Color(0xFFD32F2F))
                             }
 
-                            Spacer(modifier = Modifier.height(24.dp))
+                            Spacer(modifier = Modifier.height(16.dp))
 
                             Text(
                                 text = if (isTracking) "Tracking is ON" else "Tracking is OFF",
-                                color = if (isTracking) Color(0xFF2E7D32) else Color(0xFFD32F2F),
-                                style = MaterialTheme.typography.subtitle1
+                                color = if (isTracking) Color(0xFF2E7D32) else Color(0xFFD32F2F)
                             )
 
                             Spacer(modifier = Modifier.height(32.dp))
@@ -261,13 +244,14 @@ class MainActivity : ComponentActivity() {
             startService(this)
         }
 
-        val fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
-
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
-            ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED
+        ) {
             Toast.makeText(this, "Location permission not granted", Toast.LENGTH_SHORT).show()
             return
         }
+
+        val fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
 
         fusedLocationClient.lastLocation.addOnSuccessListener { location ->
             if (location != null) {
