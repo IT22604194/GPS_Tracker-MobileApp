@@ -33,6 +33,9 @@ import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKey
 import java.net.HttpURLConnection
 import java.net.URL
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 class LoginActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -112,8 +115,14 @@ class LoginActivity : ComponentActivity() {
                                             EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
                                             EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
                                         )
+                                        val loginTime = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(
+                                            Date()
+                                        )
 
-                                        sharedPref.edit().putString("username", username).apply()
+                                        sharedPref.edit()
+                                            .putString("username", username)
+                                            .putString("login_time", loginTime)
+                                            .apply()
                                         startActivity(Intent(this@LoginActivity, MainActivity::class.java))
                                         finish()
                                     } else {
@@ -157,7 +166,7 @@ class LoginActivity : ComponentActivity() {
     fun performLogin(username: String, password: String, onResult: (String) -> Unit) {
         Thread {
             try {
-                val url = URL("http://192.168.128.74/gps/Backend/Login.php")
+                val url = URL("http://10.3.11.192/gps/Backend/Login.php")
                 val postData = "username=$username&password=$password"
 
                 with(url.openConnection() as HttpURLConnection) {

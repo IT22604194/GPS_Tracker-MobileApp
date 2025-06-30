@@ -121,7 +121,7 @@ class RegisterActivity : ComponentActivity() {
     private fun performRegister(username: String, password: String, onResult: (String) -> Unit) {
         Thread {
             try {
-                val url = URL("http://192.168.128.74/gps/Backend/Register.php")
+                val url = URL("http://10.3.11.192/gps/Backend/Register.php")
                 val postData = "username=$username&password=$password"
 
                 with(url.openConnection() as HttpURLConnection) {

@@ -3,7 +3,7 @@ package com.example.gpstracking
 import android.Manifest
 import android.content.Context
 import android.content.Intent
-import android.media.audiofx.BassBoost
+import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Bundle
 import android.os.PowerManager
@@ -41,7 +41,6 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // Secure session
         val masterKey = MasterKey.Builder(applicationContext)
             .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
             .build()
@@ -56,7 +55,6 @@ class MainActivity : ComponentActivity() {
 
         val repId = sharedPref.getString("username", null)
 
-        //  If no session, go back to login
         if (repId == null) {
             startActivity(Intent(this, LoginActivity::class.java))
             finish()
@@ -70,6 +68,9 @@ class MainActivity : ComponentActivity() {
         setContent {
             GPSTrackingTheme {
                 var isTracking by remember { mutableStateOf(false) }
+                val clockInTimePref = remember {
+                    mutableStateOf(sharedPref.getString("clock_in_time", null))
+                }
 
                 Scaffold(
                     topBar = {
@@ -93,13 +94,66 @@ class MainActivity : ComponentActivity() {
                                 color = Color(0xFF0D47A1)
                             )
 
+                            Text(
+                                text = "Rep ID: $repId",
+                                style = MaterialTheme.typography.body1,
+                                color = Color.DarkGray
+                            )
+
                             Spacer(modifier = Modifier.height(24.dp))
 
                             Button(
                                 onClick = {
                                     if (hasLocationPermissions()) {
-                                        startTracking(repId)
-                                        isTracking = true
+                                        val fusedLocationClient = LocationServices.getFusedLocationProviderClient(this@MainActivity)
+
+                                        if (ActivityCompat.checkSelfPermission(this@MainActivity, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
+                                            ActivityCompat.checkSelfPermission(this@MainActivity, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                                            Toast.makeText(this@MainActivity, "Location permission not granted", Toast.LENGTH_SHORT).show()
+                                            return@Button
+                                        }
+
+                                        fusedLocationClient.lastLocation.addOnSuccessListener { location ->
+                                            if (location != null) {
+                                                val lat = location.latitude.toString()
+                                                val lon = location.longitude.toString()
+                                                val clockInTime = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date())
+
+                                                sharedPref.edit().putString("clock_in_time", clockInTime).apply()
+                                                clockInTimePref.value = clockInTime
+
+                                                val url = "http://10.3.11.192/gps/Backend/location_handler.php"
+                                                val requestQueue = Volley.newRequestQueue(applicationContext)
+
+                                                val stringRequest = object : StringRequest(Method.POST, url,
+                                                    Response.Listener { response ->
+                                                        Log.d("ClockInSuccess", "Server response: $response")
+                                                        Toast.makeText(this@MainActivity, "Clocked in successfully", Toast.LENGTH_SHORT).show()
+                                                    },
+                                                    Response.ErrorListener { error ->
+                                                        Log.e("ClockInError", "Error: ${error.message}")
+                                                        Toast.makeText(this@MainActivity, "Clock in failed", Toast.LENGTH_SHORT).show()
+                                                    }
+                                                ) {
+                                                    override fun getParams(): MutableMap<String, String> {
+                                                        return hashMapOf(
+                                                            "rep_id" to repId,
+                                                            "latitude" to lat,
+                                                            "longitude" to lon,
+                                                            "clock_in_time" to clockInTime,
+                                                            "action" to "clock_in"
+                                                        )
+                                                    }
+                                                }
+
+                                                requestQueue.add(stringRequest)
+
+                                                startTracking(repId)
+                                                isTracking = true
+                                            } else {
+                                                Toast.makeText(this@MainActivity, "Location not available", Toast.LENGTH_SHORT).show()
+                                            }
+                                        }
                                     } else {
                                         ActivityCompat.requestPermissions(
                                             this@MainActivity,
@@ -122,6 +176,8 @@ class MainActivity : ComponentActivity() {
                                 onClick = {
                                     stopTracking(repId)
                                     isTracking = false
+                                    sharedPref.edit().remove("clock_in_time").apply()
+                                    clockInTimePref.value = null
                                 },
                                 modifier = Modifier
                                     .fillMaxWidth()
@@ -129,6 +185,22 @@ class MainActivity : ComponentActivity() {
                                 colors = ButtonDefaults.buttonColors(backgroundColor = Color(0xFFD32F2F))
                             ) {
                                 Text("Clock Out", color = Color.White)
+                            }
+
+                            Spacer(modifier = Modifier.height(16.dp))
+
+                            if (clockInTimePref.value != null) {
+                                Text(
+                                    text = "🟢 You clocked in at: ${clockInTimePref.value}",
+                                    color = Color(0xFF2E7D32),
+                                    style = MaterialTheme.typography.subtitle1
+                                )
+                            } else {
+                                Text(
+                                    text = "🔴 You are not clocked in",
+                                    color = Color(0xFFD32F2F),
+                                    style = MaterialTheme.typography.subtitle1
+                                )
                             }
 
                             Spacer(modifier = Modifier.height(24.dp))
@@ -160,19 +232,17 @@ class MainActivity : ComponentActivity() {
             }
         }
 
-
         val powerManager = getSystemService(Context.POWER_SERVICE) as PowerManager
         if (!powerManager.isIgnoringBatteryOptimizations(packageName)) {
             val intent = Intent(android.provider.Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS)
             intent.data = Uri.parse("package:$packageName")
             startActivity(intent)
         }
-
     }
 
     private fun hasLocationPermissions(): Boolean {
         return LOCATION_PERMISSIONS.all {
-            ActivityCompat.checkSelfPermission(this, it) == android.content.pm.PackageManager.PERMISSION_GRANTED
+            ActivityCompat.checkSelfPermission(this, it) == PackageManager.PERMISSION_GRANTED
         }
     }
 
@@ -191,57 +261,50 @@ class MainActivity : ComponentActivity() {
             startService(this)
         }
 
-        if (!hasLocationPermissions()) {
+        val fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
+
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
+            ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             Toast.makeText(this, "Location permission not granted", Toast.LENGTH_SHORT).show()
             return
         }
 
-        val fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
+        fusedLocationClient.lastLocation.addOnSuccessListener { location ->
+            if (location != null) {
+                val lat = location.latitude.toString()
+                val lon = location.longitude.toString()
+                val clockOutTime = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date())
 
-        try {
-            fusedLocationClient.lastLocation.addOnSuccessListener { location ->
-                if (location != null) {
-                    val lat = location.latitude.toString()
-                    val lon = location.longitude.toString()
-                    val clockOutTime = SimpleDateFormat("yyyy-MM-dd HH:mm:ss",Locale.getDefault()).format(Date())
+                val url = "http://10.3.11.192/gps/Backend/location_handler.php"
+                val requestQueue = Volley.newRequestQueue(applicationContext)
 
-                    val url = "http://192.168.128.74/gps/Backend/location_handler.php"
-                    val requestQueue = Volley.newRequestQueue(applicationContext)
-
-                    val stringRequest = object : StringRequest(
-                        Method.POST, url,
-                        Response.Listener { response ->
-                            Log.d("ClockOutSuccess", "Server response: $response")
-                            Toast.makeText(this, "Clocked out successfully", Toast.LENGTH_SHORT).show()
-                        },
-                        Response.ErrorListener { error ->
-                            Log.e("ClockOutError", "Error: ${error.message}")
-                            Toast.makeText(this, "Clock out failed", Toast.LENGTH_SHORT).show()
-                        }
-                    ) {
-                        override fun getParams(): MutableMap<String, String> {
-                            val params = HashMap<String, String>()
-                            params["rep_id"] = repId
-                            params["latitude"] = lat
-                            params["longitude"] = lon
-                            params["clock_out_time"] = clockOutTime
-                            params["action"] = "clock_out"
-                            return params
-                        }
+                val stringRequest = object : StringRequest(Method.POST, url,
+                    Response.Listener { response ->
+                        Log.d("ClockOutSuccess", "Server response: $response")
+                        Toast.makeText(this, "Clocked out successfully", Toast.LENGTH_SHORT).show()
+                    },
+                    Response.ErrorListener { error ->
+                        Log.e("ClockOutError", "Error: ${error.message}")
+                        Toast.makeText(this, "Clock out failed", Toast.LENGTH_SHORT).show()
                     }
-
-                    requestQueue.add(stringRequest)
-                } else {
-                    Toast.makeText(this, "Location not available", Toast.LENGTH_SHORT).show()
-                    Log.e("ClockOutError", "Location is null")
+                ) {
+                    override fun getParams(): MutableMap<String, String> {
+                        return hashMapOf(
+                            "rep_id" to repId,
+                            "latitude" to lat,
+                            "longitude" to lon,
+                            "clock_out_time" to clockOutTime,
+                            "action" to "clock_out"
+                        )
+                    }
                 }
+
+                requestQueue.add(stringRequest)
+            } else {
+                Toast.makeText(this, "Location not available", Toast.LENGTH_SHORT).show()
             }
-        } catch (e: SecurityException) {
-            Log.e("ClockOutError", "SecurityException: ${e.message}")
-            Toast.makeText(this, "Permission error accessing location", Toast.LENGTH_SHORT).show()
         }
     }
-
 
     override fun onRequestPermissionsResult(
         requestCode: Int,
@@ -249,25 +312,21 @@ class MainActivity : ComponentActivity() {
         grantResults: IntArray
     ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        if (requestCode == PERMISSION_REQUEST_CODE) {
-            if (grantResults.all { it == android.content.pm.PackageManager.PERMISSION_GRANTED }) {
-                val masterKey = MasterKey.Builder(applicationContext)
-                    .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
-                    .build()
+        if (requestCode == PERMISSION_REQUEST_CODE && grantResults.all { it == PackageManager.PERMISSION_GRANTED }) {
+            val masterKey = MasterKey.Builder(applicationContext)
+                .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
+                .build()
 
-                val sharedPref = EncryptedSharedPreferences.create(
-                    applicationContext,
-                    "UserSession",
-                    masterKey,
-                    EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
-                    EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
-                )
+            val sharedPref = EncryptedSharedPreferences.create(
+                applicationContext,
+                "UserSession",
+                masterKey,
+                EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
+                EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
+            )
 
-                val repId = sharedPref.getString("username", "unknown") ?: "unknown"
-                startTracking(repId)
-            }
+            val repId = sharedPref.getString("username", "unknown") ?: "unknown"
+            startTracking(repId)
         }
     }
-
-
 }
